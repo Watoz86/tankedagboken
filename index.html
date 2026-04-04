@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tankedagboken 🎙️</title>
+
+  <!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║                      TANKEDAGBOKEN                               ║
+  ║         Röstdagbok · Whisper via Netlify · Google Docs           ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║  ARKITEKTUR                                                      ║
+  ║  ─────────────────────────────────────────────────────────────  ║
+  ║  Webbläsare                                                      ║
+  ║    └─▶ MediaRecorder spelar in ljud (WebM/OGG)                   ║
+  ║    └─▶ POST /.netlify/functions/transcribe (base64-ljud)         ║
+  ║          └─▶ Netlify Function (server-side, säker)               ║
+  ║                └─▶ OpenAI Whisper API (OPENAI_API_KEY env-var)   ║
+  ║                └─▶ Returnerar svensk text                        ║
+  ║    └─▶ Append text till Google Docs via Docs API                 ║
+  ║                                                                  ║
+  ║  KONFIGURATION                                                   ║
+  ║  Google OAuth Client ID:                                         ║
+  ║    516700443444-eka3nj23344e8gtci52qgsq2t8mn1aao                ║
+  ║    .apps.googleusercontent.com                                   ║
+  ║  Google Doc ID:                                                  ║
+  ║    198VN_aDtpisiNVlx19dKXlDFNfnZC6xhbwdizXZSwVQ                ║
+  ║                                                                  ║
+  ║  NETLIFY MILJÖVARIABEL (sätt i Netlify Dashboard):               ║
+  ║    OPENAI_API_KEY = sk-...                                       ║
+  ║                                                                  ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║  TASKER / AUTOVOICE                                              ║
+  ║  ─────────────────────────────────────────────────────────────  ║
+  ║  Öppna URL med parametern ?action=record för att starta          ║
+  ║  inspelning automatiskt.                                         ║
+  ║                                                                  ║
+  ║  Tasker Task:                                                    ║
+  ║    Action: Launch App > Browser                                  ║
+  ║    URL: https://regal-malabi-cd8987.netlify.app?action=record   ║
+  ║                                                                  ║
+  ║  AutoVoice:                                                      ║
+  ║    Phrase: "dagbok" / "spela in tanke"                          ║
+  ║    Action: Browse URL ovan                                       ║
+  ║                                                                  ║
+  ║  Tips: Skapa en Tasker-widget på hemskärmen!                    ║
+  ╚══════════════════════════════════════════════════════════════════╝
+  -->
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a24;
+      --surface2: #22222f;
+      --accent: #7c6aff;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --border: #2d2d40;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+    }
+
+    .container { width: 100%; max-width: 600px; }
+
+    header { text-align: center; margin-bottom: 32px; }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn:hover:not(:disabled) { opacity: 0.85; }
+
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #5b4ed4); color: #fff; }
+    .btn-google  { background: #fff; color: #333; border: 1px solid #ddd; }
+    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-success { background: var(--green); color: #0a2e1e; }
+    .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+    /* ── Record button ── */
+    #recordBtn {
+      width: 100%;
+      padding: 20px;
+      font-size: 1.15rem;
+      border-radius: var(--radius);
+      justify-content: center;
+    }
+    #recordBtn.recording {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      animation: pulse-ring 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); }
+      50%      { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+    }
+
+    /* ── Visualizer ── */
+    #visualizer {
+      width: 100%;
+      height: 56px;
+      border-radius: 8px;
+      background: var(--surface2);
+      margin-bottom: 14px;
+    }
+
+    /* ── Timer ── */
+    #timer {
+      text-align: center;
+      font-size: 2.2rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent2);
+      letter-spacing: 3px;
+      margin-bottom: 14px;
+      display: none;
+    }
+    #timer.active { display: block; }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .badge-ok    { background: rgba(52,211,153,.15); color: var(--green); }
+    .badge-warn  { background: rgba(251,191,36,.15); color: var(--yellow); }
+    .badge-err   { background: rgba(248,113,113,.15); color: var(--red); }
+    .badge-info  { background: rgba(124,106,255,.15); color: var(--accent2); }
+    .dot { width:7px;height:7px;border-radius:50%;background:currentColor; }
+    .dot.pulse { animation: dotpulse 1.2s ease-in-out infinite; }
+    @keyframes dotpulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+    /* ── Textarea ── */
+    #transcriptText {
+      width: 100%;
+      min-height: 130px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--text);
+      font-size: 0.95rem;
+      line-height: 1.65;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+    }
+    #transcriptText:focus { border-color: var(--accent); }
+
+    /* ── Row helpers ── */
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Log ── */
+    #log {
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 0.77rem;
+      color: var(--muted);
+      font-family: 'SF Mono', 'Fira Mono', monospace;
+      line-height: 1.8;
+    }
+    .log-ok   { color: var(--green); }
+    .log-err  { color: var(--red); }
+    .log-info { color: var(--accent2); }
+    .log-warn { color: var(--yellow); }
+
+    /* ── History ── */
+    .h-item {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .h-ts   { color: var(--muted); font-size: 0.72rem; margin-bottom: 3px; }
+    .h-text { color: var(--text); }
+
+    /* ── User row ── */
+    .user-row { display:flex; align-items:center; gap:10px; }
+    .avatar   { width:36px;height:36px;border-radius:50%;object-fit:cover; }
+
+    /* ── Spinner ── */
+    .spin {
+      width:16px;height:16px;
+      border:2px solid rgba(255,255,255,.3);
+      border-top-color:#fff;
+      border-radius:50%;
+      animation: _spin .7s linear infinite;
+      display:inline-block;
+    }
+    @keyframes _spin{to{transform:rotate(360deg)}}
+
+    /* ── Notice ── */
+    .notice {
+      background: rgba(124,106,255,.13);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--accent2);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    small { color: var(--muted); font-size: 0.78rem; }
+    select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      color: var(--text);
+      font-size: 0.82rem;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🎙️ Tankedagboken</h1>
+    <p>Spela in dina tankar — sparas direkt i Google Docs</p>
+  </header>
+
+  <!-- Tasker-notice -->
+  <div id="autoNotice" class="notice">
+    ⚡ Automatisk inspelning startad via Tasker / AutoVoice
+  </div>
+
+  <!-- ── GOOGLE AUTH ── -->
+  <div class="card" id="authCard">
+    <div class="card-title">Google-konto</div>
+
+    <div id="notLoggedIn">
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px;">
+        Logga in för att spara transkriptioner i Google Docs.
+      </p>
+      <button class="btn btn-google" onclick="startLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.1 0 5.8 1.1 8 2.9l6-6C34.5 3 29.5 1 24 1 14.9 1 7.1 6.7 3.9 14.6l7 5.4C12.7 13.7 17.9 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.3-9.8 7.3-16.9z"/>
+          <path fill="#FBBC05" d="M10.9 28.6A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.2.8-4.6l-7-5.4A23.9 23.9 0 0 0 0 24c0 3.9.9 7.6 2.6 10.9l7.4-5.7-.1-.6z"/>
+          <path fill="#34A853" d="M24 47c5.5 0 10.2-1.8 13.6-4.9l-7.4-5.7c-1.9 1.3-4.3 2.1-6.2 2.1-6.1 0-11.3-4.1-13.2-9.8l-7.4 5.7C7.1 41.3 14.9 47 24 47z"/>
+        </svg>
+        Logga in med Google
+      </button>
+    </div>
+
+    <div id="loggedIn" style="display:none;">
+      <div class="user-row">
+        <img id="uAvatar" class="avatar" src="" alt="" />
+        <div>
+          <div style="font-weight:600;" id="uName"></div>
+          <div style="font-size:.8rem;color:var(--muted);" id="uEmail"></div>
+        </div>
+        <button class="btn btn-ghost" style="margin-left:auto;font-size:.8rem;padding:6px 12px;" onclick="logout()">Logga ut</button>
+      </div>
+      <div style="margin-top:10px;">
+        <span class="badge badge-ok"><span class="dot"></span> Ansluten till Google Docs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SPELA IN ── -->
+  <div class="card">
+    <div class="card-title">Spela in</div>
+
+    <canvas id="visualizer"></canvas>
+    <div id="timer">00:00</div>
+
+    <button id="recordBtn" class="btn btn-primary" onclick="toggleRecording()">
+      <span id="recIcon">🎙️</span>
+      <span id="recLabel">Starta inspelning</span>
+    </button>
+
+    <div class="row" style="margin-top:12px;">
+      <small>Metod:</small>
+      <select id="methodSel">
+        <option value="auto">Auto (Whisper via server)</option>
+        <option value="whisper">Whisper (server)</option>
+        <option value="webspeech">Web Speech API (offline)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── TRANSKRIBERING ── -->
+  <div class="card">
+    <div class="row" style="margin-bottom:12px;">
+      <div class="card-title" style="margin-bottom:0;">Transkribering</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" style="font-size:.8rem;padding:6px 12px;" onclick="clearT()">Rensa</button>
+        <button id="saveBtn" class="btn btn-success" style="font-size:.8rem;padding:6px 14px;" onclick="saveToDocs()">
+          💾 Spara till Docs
+        </button>
+      </div>
+    </div>
+    <textarea id="transcriptText" placeholder="Din transkribering visas här. Du kan redigera texten innan du sparar…"></textarea>
+    <div id="tStatus" style="margin-top:8px;font-size:.82rem;"></div>
+  </div>
+
+  <!-- ── LOGG ── -->
+  <div class="card">
+    <div class="row" style="cursor:pointer;margin-bottom:10px;" onclick="toggleEl('logWrap')">
+      <div class="card-title" style="margin-bottom:0;">Aktivitetslogg</div>
+      <small>▼</small>
+    </div>
+    <div id="logWrap"><div id="log"></div></div>
+  </div>
+
+  <!-- ── HISTORIK ── -->
+  <div class="card">
+    <div class="row" style="cursor:pointer;margin-bottom:10px;" onclick="toggleEl('histWrap')">
+      <div class="card-title" style="margin-bottom:0;">Senaste inlägg (lokalt)</div>
+      <button class="btn btn-ghost" style="font-size:.75rem;padding:4px 10px;"
+              onclick="event.stopPropagation();clearHist()">Rensa</button>
+    </div>
+    <div id="histWrap">
+      <div id="histList"><small>Inga sparade inlägg ännu.</small></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const OAUTH_CLIENT_ID = '516700443444-eka3nj23344e8gtci52qgsq2t8mn1aao.apps.googleusercontent.com';
+const DOC_ID          = '198VN_aDtpisiNVlx19dKXlDFNfnZC6xhbwdizXZSwVQ';
+const DOCS_SCOPE      = 'https://www.googleapis.com/auth/documents';
+const FUNCTION_URL    = '/.netlify/functions/transcribe';
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let accessToken   = null;
+let userInfo      = null;
+let mediaRecorder = null;
+let audioChunks   = [];
+let isRecording   = false;
+let timerIv       = null;
+let timerSec      = 0;
+let animFrame     = null;
+let audioCtx      = null;
+let analyser      = null;
+let speechRecog   = null;
+let tokenClient   = null;
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  resizeCanvas();
+  renderHistory();
+
+  // Återanvänd token från session
+  const saved = sessionStorage.getItem('gis_token');
+  if (saved) {
+    try {
+      const t = JSON.parse(saved);
+      if (t.expires_at > Date.now()) { accessToken = t.access_token; fetchUserInfo(); }
+      else sessionStorage.removeItem('gis_token');
+    } catch(_) {}
+  }
+
+  // Tasker / AutoVoice ?action=record
+  if (new URLSearchParams(location.search).get('action') === 'record') {
+    document.getElementById('autoNotice').style.display = 'block';
+    log('⚡ Auto-inspelning via URL-parameter', 'info');
+    setTimeout(() => { if (!isRecording) startRecording(); }, 1100);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE IDENTITY SERVICES
+// ═══════════════════════════════════════════════════════════
+function getTokenClient() {
+  if (!tokenClient) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: OAUTH_CLIENT_ID,
+      scope: DOCS_SCOPE,
+      callback: onToken,
+      error_callback: e => log('OAuth-fel: ' + JSON.stringify(e), 'err')
+    });
+  }
+  return tokenClient;
+}
+
+function startLogin() {
+  try { getTokenClient().requestAccessToken(); }
+  catch(e) { log('Kunde inte starta login: ' + e.message, 'err'); }
+}
+
+function onToken(resp) {
+  if (resp.error) { log('Login misslyckades: ' + resp.error, 'err'); return; }
+  accessToken = resp.access_token;
+  const exp = Date.now() + (resp.expires_in || 3600) * 1000;
+  sessionStorage.setItem('gis_token', JSON.stringify({ access_token: accessToken, expires_at: exp }));
+  log('✓ Inloggad med Google', 'ok');
+  fetchUserInfo();
+}
+
+async function fetchUserInfo() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+      { headers: { Authorization: 'Bearer ' + accessToken } });
+    userInfo = await r.json();
+    showLoggedIn();
+    log('✓ ' > (userInfo.email || 'Inloggad'), 'ok');
+  } catch(e) { log('Kunde inte hämta användarinfo', 'err'); }
+}
+
+function showLoggedIn() {
+  document.getElementById('notLoggedIn').style.display = 'none';
+  document.getElementById('loggedIn').style.display = 'block';
+  if (userInfo) {
+    document.getElementById('uName').textContent  = userInfo.name  || '';
+    document.getElementById('uEmail').textContent = userInfo.email || '';
+    if (userInfo.picture) document.getElementById('uAvatar').src = userInfo.picture;
+  }
+}
+
+function logout() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  accessToken = null; userInfo = null;
+  sessionStorage.removeItem('gis_token');
+  document.getElementById('notLoggedIn').style.display = 'block';
+  document.getElementById('loggedIn').style.display = 'none';
+  log('Loggade ut', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INSPELNING
+// ═══════════════════════════════════════════════════════════
+function getMethod() {
+  const v = document.getElementById('methodSel').value;
+  return v === 'auto' ? 'whisper' : v;
+}
+
+async function toggleRecording() {
+  isRecording ? stopRecording() : await startRecording();
+}
+
+async function startRecording() {
+  const method = getMethod();
+  log('Startar inspelning (' + method + ')…', 'info');
+
+  if (method === 'webspeech') { startWebSpeech(); return; }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    setupViz(stream);
+
+    const mime = bestMime();
+    mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      stopViz();
+      const blob = new Blob(audioChunks, { type: mime || 'audio/webm' });
+      log('Klar (' + (blob.size/1024).toFixed(0) + ' KB) — transkriberar…', 'info');
+      await transcribeViaFunction(blob);
+    };
+    mediaRecorder.start(100);
+    setRecUI(true);
+    startTimer();
+    isRecording = true;
+    log('🔴 Inspelning startad', 'ok');
+  } catch(e) {
+    log('Mikrofon-fel: ' + e.message, 'err');
+    alert('Kunde inte komma åt mikrofon:\n' + e.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+    isRecording = false;
+    setRecUI(false);
+    stopTimer();
+    log('⏹ Stoppad', 'info');
+  }
+  if (speechRecog) speechRecog.stop();
+}
+
+function bestMime() {
+  const candidates = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
+  return candidates.find(t => MediaRecorder.isTypeSupported(t)) || null;
+}
+
+// ── Blob → base64 ──
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+// ── Skicka till Netlify Function ──
+async function transcribeViaFunction(blob) {
+  setTStatus('warn', '⏳ Transkriberar med Whisper…');
+  try {
+    const base64 = await blobToBase64(blob);
+    const res = await fetch(FUNCTION_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ audio: base64, mimeType: blob.type })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || res.statusText);
+
+    const text = data.text || '';
+    appendTranscript(text);
+    setTStatus('ok', '✓ Transkribering klar');
+    log('✓ Whisper: ' + text.slice(0,70) + (text.length > 70 ? '…' : ''), 'ok');
+  } catch(e) {
+    setTStatus('err', '✗ ' + e.message);
+    log('Whisper-fel: ' + e.message, 'err');
+  }
+}
+
+// ── Web Speech API ──
+function startWebSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert('Web Speech API stöds inte i din webbläsare.\nAnvänd Chrome eller Edge.');
+    return;
+  }
+  speechRecog = new SR();
+  speechRecog.lang = 'sv-SE';
+  speechRecog.continuous = true;
+  speechRecog.interimResults = true;
+
+  let final = document.getElementById('transcriptText').value
+            ? document.getElementById('transcriptText').value + '\n'
+            : '';
+  let interim = '';
+
+  speechRecog.onresult = e => {
+    interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    document.getElementById('transcriptText').value = final + interim;
+  };
+  speechRecog.onerror = e => log('Web Speech-fel: ' + e.error, 'err');
+  speechRecog.onend   = () => { isRecording = false; setRecUI(false); stopTimer(); log('⏹ Web Speech klar', 'info'); };
+
+  speechRecog.start();
+  setRecUI(true);
+  startTimer();
+  isRecording = true;
+  log('🔴 Web Speech startad', 'ok');
+}
+
+function appendTranscript(text) {
+  const el = document.getElementById('transcriptText');
+  el.value = el.value ? el.value + '\n' + text : text;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE DOCS
+// ═══════════════════════════════════════════════════════════
+async function saveToDocs() {
+  const text = document.getElementById('transcriptText').value.trim();
+  if (!text) { alert('Ingen text att spara.'); return; }
+  if (!accessToken) { alert('Logga in med Google först.'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Sparar…';
+  log('Sparar till Google Docs…', 'info');
+
+  try {
+    // Hämta dokumentets slutindex
+    const docRes = await fetch(
+      `https://docs.googleapis.com/v1/documents/${DOC_ID}`,
+      { headers: { Authorization: 'Bearer ' + accessToken } }
+    );
+
+    if (docRes.status === 401) {
+      logout();
+      throw new Error('Sessionen har gått ut — logga in igen');
+    }
+    if (!docRes.ok) {
+      const e = await docRes.json();
+      throw new Error(e.error?.message || docRes.statusText);
+    }
+
+    const doc = await docRes.json();
+    const content = doc.body.content;
+    const endIndex = content[content.length - 1].endIndex - 1;
+
+    // Formatera inlägg
+    const now = new Date();
+    const ds = now.toLocaleDateString('sv-SE', {
+      year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
+    });
+    const entry = '\n────────────────────────\n' + ds + '\n\n' + text + '\n';
+
+    // Append via batchUpdate
+    const upd = await fetch(
+      `https://docs.googleapis.com/v1/documents/${DOC_ID}:batchUpdate`,
+      {
+        method:  'POST',
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ requests: [{ insertText: { location: { index: endIndex }, text: entry } }] })
+      }
+    );
+    if (!upd.ok) {
+      const e = await upd.json();
+      throw new Error(e.error?.message || upd.statusText);
+    }
+
+    log('✓ Sparat till Google Docs', 'ok');
+    saveHist(ds, text);
+    renderHistory();
+    document.getElementById('transcriptText').value = '';
+    setTStatus('ok', '✓ Sparat i Google Docs!');
+
+  } catch(e) {
+    log('Docs-fel: ' + e.message, 'err');
+    setTStatus('err', '✗ ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '💾 Spara till Docs';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VISUALIZER
+// ═══════════════════════════════════════════════════════════
+function setupViz(stream) {
+  const canvas = document.getElementById('visualizer');
+  const ctx    = canvas.getContext('2d');
+  audioCtx     = new (window.AudioContext || window.webkitAudioContext)();
+  analyser     = audioCtx.createAnalyser();
+  analyser.fftSize = 256;
+  audioCtx.createMediaStreamSource(stream).connect(analyser);
+  const buf = new Uint8Array(analyser.frequencyBinCount);
+
+  (function draw() {
+    animFrame = requestAnimationFrame(draw);
+    analyser.getByteFrequencyData(buf);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const bw = (canvas.width / buf.length) * 2.6;
+    let x = 0;
+    for (let i = 0; i < buf.length; i++) {
+      const h = (buf[i] / 255) * canvas.height;
+      ctx.fillStyle = `hsl(${250 + (buf[i]/255)*55},70%,56%)`;
+      ctx.fillRect(x, canvas.height - h, bw, h);
+      x += bw + 1;
+    }
+  })();
+}
+
+function stopViz() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  const c = document.getElementById('visualizer');
+  c.getContext('2d').clearRect(0, 0, c.width, c.height);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════════════
+function startTimer() {
+  timerSec = 0;
+  document.getElementById('timer').classList.add('active');
+  tick();
+  timerIv = setInterval(tick, 1000);
+}
+function tick() {
+  const m = String(Math.floor(timerSec/60)).padStart(2,'0');
+  const s = String(timerSec%60).padStart(2,'0');
+  document.getElementById('timer').textContent = m + ':' + s;
+  timerSec++;
+}
+function stopTimer() {
+  clearInterval(timerIv);
+  document.getElementById('timer').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HISTORIK
+// ═══════════════════════════════════════════════════════════
+function saveHist(date, text) {
+  const h = JSON.parse(localStorage.getItem('tdagbok_h') || '[]');
+  h.unshift({ date, text });
+  if (h.length > 25) h.pop();
+  localStorage.setItem('tdagbok_h', JSON.stringify(h));
+}
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem('tdagbok_h') || '[]');
+  const el = document.getElementById('histList');
+  if (!h.length) { el.innerHTML = '<small>Inga sparade inlägg ännu.</small>'; return; }
+  el.innerHTML = h.map(i => `
+    <div class="h-item">
+      <div class="h-ts">${i.date}</div>
+      <div class="h-text">${esc(i.text.slice(0<200))}${i.text.length>200?'…':''}</div>
+    </div>`).join('');
+}
+function clearHist() {
+  if (!confirm('Rensa lokal historik?')) return;
+  localStorage.removeItem('tdagbok_h');
+  renderHistory();
+  log('Historik rensad', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════════════
+function setRecUI(on) {
+  const btn   = document.getElementById('recordBtn');
+  const icon  = document.getElementById('recIcon');
+  const label = document.getElementById('recLabel');
+  btn.classList.toggle('recording', on);
+  icon.textContent  = on ? '⏹' : '🎙️';
+  label.textContent = on ? 'Stoppa inspelning' : 'Starta inspelning';
+}
+function setTStatus(type, msg) {
+  const colors = { ok:'var(--green)', warn:'var(--yellow)', err:'var(--red)', '':'var(--muted)' };
+  document.getElementById('tStatus').innerHTML =
+    `<span style="color:${colors[type]||colors['']}">${msg}</span>`;
+}
+function clearT() {
+  document.getElementById('transcriptText').value = '';
+  setTStatus('', '');
+}
+function toggleEl(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+function log(msg, type = '') {
+  const div = document.createElement('div');
+  div.className = 'log-' + type;
+  div.textContent = `[${new Date().toLocaleTimeString('sv-SE')}] ${msg}`;
+  const l = document.getElementById('log');
+  l.appendChild(div);
+  l.scrollTop = l.scrollHeight;
+}
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function resizeCanvas() {
+  const c = document.getElementById('visualizer');
+  c.width  = c.offsetWidth;
+  c.height = c.offsetHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+</script>
+</body>
+</html>
