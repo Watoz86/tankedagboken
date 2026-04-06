@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tankedagboken 😙️</title>
+    <link rel="manifest" href="/manifest.json" />
+      <meta name="theme-color" content="#7c6aff" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+            <meta name="apple-mobile-web-app-title" content="Dagboken" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
@@ -286,6 +291,12 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('autoNotice').style.display = 'block';
     setTimeout(() => { if (!isRecording) startRecording(); }, 1100);
   }
+      if (new URLSearchParams(location.search).get('action') === 'handsfree') {
+              document.getElementById('autoNotice').style.display = 'block';
+                    document.getElementById('autoNotice').textContent = '🎧 Startar handsfree-läge…';
+                          setTimeout(() => { if (!handsfreeMode) startHandsfree(); }, 1200);
+                              }
+      }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -792,6 +803,10 @@ function resizeCanvas() {
   c.width = c.offsetWidth; c.height = c.offsetHeight;
 }
 window.addEventListener('resize', resizeCanvas);
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    }
+}
 </script>
 </body>
 </html>
