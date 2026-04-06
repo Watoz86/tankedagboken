@@ -390,7 +390,7 @@ function listenForWakeWord() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   wakeWordRecog = new SR();
   wakeWordRecog.lang = 'sv-SE';
-  wakeWordRecog.continuous = false;
+  wakeWordRecog.continuous = true;
   wakeWordRecog.interimResults = false;
   wakeWordRecog.maxAlternatives = 3;
 
