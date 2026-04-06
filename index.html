@@ -296,7 +296,6 @@ window.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('autoNotice').textContent = '🎧 Startar handsfree-läge…';
                           setTimeout(() => { if (!handsfreeMode) startHandsfree(); }, 1200);
                               }
-      }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -580,7 +579,7 @@ async function transcribeViaFunction(blob) {
       return;
     }
     appendTranscript(text);
-    setTStatus(ok', '✓ Transkribering klar');
+    setTStatus('ok', '✓ Transkribering klar');
     log('✓ Whisper: ' + text.slice(0,70) + (text.length > 70 ? '…' : ''), 'ok');
 
     // Auto-spara
@@ -687,7 +686,7 @@ async function saveToDocs(textOverride) {
       // Manuell spara — rensa textrutan
       document.getElementById('transcriptText').value = '';
     }
-    setTStatus(ok', '✓ Sparat i Google Docs! ' + ds);
+    setTStatus('ok', '✓ Sparat i Google Docs! ' + ds);
     if (handsfreeMode) setHfStatus('✅ Sparat! Lyssnar efter aktiveringsord…');
   } catch(e) {
     log('Docs-fel: ' + e.message, 'err');
@@ -806,7 +805,6 @@ window.addEventListener('resize', resizeCanvas);
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
     }
-}
 </script>
 </body>
 </html>
