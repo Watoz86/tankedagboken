@@ -1,9 +1,1 @@
-{
-  "name": "tankedagboken",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Röstdagbok med Whisper + Google Docs",
-  "dependencies": {
-    "form-data": "^4.0.0"
-  }
-}
+{ "name": "tankedagboken", "version": "1.0.0", "private": true }
