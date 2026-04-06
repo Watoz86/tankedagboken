@@ -402,6 +402,8 @@ function listenForWakeWord() {
     if (transcripts.some(t => t.includes(word))) {
       log('✓ Aktiveringsord! Startar inspelning…', 'ok');
       setHfStatus('🔴 Spelar in — håll tyst i 3 sek för att avsluta');
+      wakeWordRecog.onend = null;
+            try { wakeWordRecog.abort(); } catch(_) {}
       startRecordingHandsfree();
     } else {
       scheduleNextWakeWord();
