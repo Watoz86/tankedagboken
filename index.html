@@ -689,7 +689,7 @@ async function saveToDocs(textOverride) {
       document.getElementById('transcriptText').value = '';
     }
     setTStatus('ok', '✓ Sparat i Google Docs! ' + ds);
-    if (handsfreeMode) setHfStatus('✅ Sparat! Lyssnar efter aktiveringsord…');
+    if (handsfreeMode) setTimeout(stopHandsfree, 2000);
   } catch(e) {
     log('Docs-fel: ' + e.message, 'err');
     setTStatus('err', '✗ ' + e.message);
