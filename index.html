@@ -276,14 +276,14 @@ window.addEventListener('DOMContentLoaded', () => {
   resizeCanvas();
   renderHistory();
   // Återanvänd token från session
-  const saved = sessionStorage.getItem('gis_token');
+  const saved = localStorage.getItem('gis_token');
   if (saved) {
     try {
       const t = JSON.parse(saved);
       if (t.expires_at > Date.now()) {
         accessToken = t.access_token;
         fetchUserInfo();
-      } else sessionStorage.removeItem('gis_token');
+      } else localStorage.removeItem('gis_token');
     } catch(_) {}
   }
   // ?action=record
@@ -319,7 +319,7 @@ function onToken(resp) {
   if (resp.error) { log('Login misslyckades: ' + resp.error, 'err'); return; }
   accessToken = resp.access_token;
   const exp = Date.now() + (resp.expires_in || 3600) * 1000;
-  sessionStorage.setItem('gis_token', JSON.stringify({ access_token: accessToken, expires_at: exp }));
+  localStorage.setItem('gis_token', JSON.stringify({ access_token: accessToken, expires_at: exp }));
   log('✓ Inloggad med Google', 'ok');
   fetchUserInfo();
 }
@@ -344,7 +344,7 @@ function showLoggedIn() {
 function logout() {
   if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
   accessToken = null; userInfo = null;
-  sessionStorage.removeItem('gis_token');
+  localStorage.removeItem('gis_token');
   document.getElementById('notLoggedIn').style.display = 'block';
   document.getElementById('loggedIn').style.display = 'none';
   log('Loggade ut', 'info');
