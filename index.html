@@ -3,300 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tankedagboken 🎙️</title>
-
-  <!--
-  ╔══════════════════════════════════════════════════════════════════╗
-  ║                      TANKEDAGBOKEN                               ║
-  ║         Röstdagbok · Whisper via Netlify · Google Docs           ║
-  ╠══════════════════════════════════════════════════════════════════╣
-  ║  ARKITEKTUR                                                      ║
-  ║  ─────────────────────────────────────────────────────────────  ║
-  ║  Webbläsare                                                      ║
-  ║    └─▶ MediaRecorder spelar in ljud (WebM/OGG)                   ║
-  ║    └─▶ POST /.netlify/functions/transcribe (base64-ljud)         ║
-  ║          └─▶ Netlify Function (server-side, säker)               ║
-  ║                └─▶ OpenAI Whisper API (OPENAI_API_KEY env-var)   ║
-  ║                └─▶ Returnerar svensk text                        ║
-  ║    └─▶ Append text till Google Docs via Docs API                 ║
-  ║                                                                  ║
-  ║  KONFIGURATION                                                   ║
-  ║  Google OAuth Client ID:                                         ║
-  ║    516700443444-eka3nj23344e8gtci52qgsq2t8mn1aao                ║
-  ║    .apps.googleusercontent.com                                   ║
-  ║  Google Doc ID:                                                  ║
-  ║    198VN_aDtpisiNVlx19dKXlDFNfnZC6xhbwdizXZSwVQ                ║
-  ║                                                                  ║
-  ║  NETLIFY MILJÖVARIABEL (sätt i Netlify Dashboard):               ║
-  ║    OPENAI_API_KEY = sk-...                                       ║
-  ║                                                                  ║
-  ╠══════════════════════════════════════════════════════════════════╣
-  ║  TASKER / AUTOVOICE                                              ║
-  ║  ─────────────────────────────────────────────────────────────  ║
-  ║  Öppna URL med parametern ?action=record för att starta          ║
-  ║  inspelning automatiskt.                                         ║
-  ║                                                                  ║
-  ║  Tasker Task:                                                    ║
-  ║    Action: Launch App > Browser                                  ║
-  ║    URL: https://regal-malabi-cd8987.netlify.app?action=record   ║
-  ║                                                                  ║
-  ║  AutoVoice:                                                      ║
-  ║    Phrase: "dagbok" / "spela in tanke"                          ║
-  ║    Action: Browse URL ovan                                       ║
-  ║                                                                  ║
-  ║  Tips: Skapa en Tasker-widget på hemskärmen!                    ║
-  ╚══════════════════════════════════════════════════════════════════╝
-  -->
-
+  <title>Tankedagboken 😙️</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <style>
     :root {
-      --bg: #0f0f13;
-      --surface: #1a1a24;
-      --surface2: #22222f;
-      --accent: #7c6aff;
-      --accent2: #a78bfa;
-      --green: #34d399;
-      --red: #f87171;
-      --yellow: #fbbf24;
-      --text: #e2e8f0;
-      --muted: #64748b;
-      --border: #2d2d40;
-      --radius: 12px;
+      --bg: #0f0f13; --surface: #1a1a24; --surface2: #22222f;
+      --accent: #7c6aff; --accent2: #a78bfa; --green: #34d399;
+      --red: #f87171; --yellow: #fbbf24; --text: #e2e8f0;
+      --muted: #64748b; --border: #2d2d40; --radius: 12px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px 16px 48px;
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; padding: 24px 16px 48px; }
     .container { width: 100%; max-width: 600px; }
-
     header { text-align: center; margin-bottom: 32px; }
-    header h1 {
-      font-size: 2rem;
-      font-weight: 700;
+    header h1 { font-size: 2rem; font-weight: 700;
       background: linear-gradient(135deg, var(--accent2), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     header p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
-
-    /* ── Cards ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-    .card-title {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    /* ── Buttons ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
-      transition: opacity 0.15s, transform 0.1s;
-    }
+    .card { background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+    .card-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+      border-radius: 8px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s; }
     .btn:active { transform: scale(0.97); }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
     .btn:hover:not(:disabled) { opacity: 0.85; }
-
     .btn-primary { background: linear-gradient(135deg, var(--accent), #5b4ed4); color: #fff; }
-    .btn-google  { background: #fff; color: #333; border: 1px solid #ddd; }
-    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-google { background: #fff; color: #333; border: 1px solid #ddd; }
+    .btn-danger { background: var(--red); color: #fff; }
     .btn-success { background: var(--green); color: #0a2e1e; }
-    .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
-
-    /* ── Record button ── */
-    #recordBtn {
-      width: 100%;
-      padding: 20px;
-      font-size: 1.15rem;
-      border-radius: var(--radius);
-      justify-content: center;
-    }
-    #recordBtn.recording {
-      background: linear-gradient(135deg, #ef4444, #b91c1c);
-      animation: pulse-ring 1.4s ease-in-out infinite;
-    }
+    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-hf { background: linear-gradient(135deg, #059669, #047857); color: #fff; }
+    .btn-hf.active { background: linear-gradient(135deg, #dc2626, #991b1b);
+      animation: pulse-ring 1.4s ease-in-out infinite; }
+    #recordBtn { width: 100%; padding: 20px; font-size: 1.15rem;
+      border-radius: var(--radius); justify-content: center; }
+    #recordBtn.recording { background: linear-gradient(135deg, #ef4444, #b91c1c);
+      animation: pulse-ring 1.4s ease-in-out infinite; }
     @keyframes pulse-ring {
       0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); }
-      50%      { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+      50% { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
     }
-
-    /* ── Visualizer ── */
-    #visualizer {
-      width: 100%;
-      height: 56px;
-      border-radius: 8px;
-      background: var(--surface2);
-      margin-bottom: 14px;
-    }
-
-    /* ── Timer ── */
-    #timer {
-      text-align: center;
-      font-size: 2.2rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      color: var(--accent2);
-      letter-spacing: 3px;
-      margin-bottom: 14px;
-      display: none;
-    }
+    #visualizer { width: 100%; height: 56px; border-radius: 8px;
+      background: var(--surface2); margin-bottom: 14px; }
+    #timer { text-align: center; font-size: 2.2rem; font-weight: 700;
+      font-variant-numeric: tabular-nums; color: var(--accent2);
+      letter-spacing: 3px; margin-bottom: 14px; display: none; }
     #timer.active { display: block; }
-
-    /* ── Status badges ── */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 10px;
-      border-radius: 99px;
-      font-size: 0.78rem;
-      font-weight: 600;
-    }
-    .badge-ok    { background: rgba(52,211,153,.15); color: var(--green); }
-    .badge-warn  { background: rgba(251,191,36,.15); color: var(--yellow); }
-    .badge-err   { background: rgba(248,113,113,.15); color: var(--red); }
-    .badge-info  { background: rgba(124,106,255,.15); color: var(--accent2); }
+    .badge { display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 99px; font-size: 0.78rem; font-weight: 600; }
+    .badge-ok { background: rgba(52,211,153,.15); color: var(--green); }
+    .badge-warn { background: rgba(251,191,36,.15); color: var(--yellow); }
+    .badge-err { background: rgba(248,113,113,.15); color: var(--red); }
+    .badge-info { background: rgba(124,106,255,.15); color: var(--accent2); }
     .dot { width:7px;height:7px;border-radius:50%;background:currentColor; }
     .dot.pulse { animation: dotpulse 1.2s ease-in-out infinite; }
     @keyframes dotpulse { 0%,100%{opacity:1}50%{opacity:.3} }
-
-    /* ── Textarea ── */
-    #transcriptText {
-      width: 100%;
-      min-height: 130px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      color: var(--text);
-      font-size: 0.95rem;
-      line-height: 1.65;
-      resize: vertical;
-      outline: none;
-      font-family: inherit;
-    }
+    #transcriptText { width: 100%; min-height: 130px; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+      color: var(--text); font-size: 0.95rem; line-height: 1.65; resize: vertical;
+      outline: none; font-family: inherit; }
     #transcriptText:focus { border-color: var(--accent); }
-
-    /* ── Row helpers ── */
-    .row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    /* ── Log ── */
-    #log {
-      max-height: 150px;
-      overflow-y: auto;
-      font-size: 0.77rem;
-      color: var(--muted);
-      font-family: 'SF Mono', 'Fira Mono', monospace;
-      line-height: 1.8;
-    }
-    .log-ok   { color: var(--green); }
-    .log-err  { color: var(--red); }
-    .log-info { color: var(--accent2); }
-    .log-warn { color: var(--yellow); }
-
-    /* ── History ── */
-    .h-item {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
-    .h-ts   { color: var(--muted); font-size: 0.72rem; margin-bottom: 3px; }
+    .row { display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; flex-wrap: wrap; }
+    #log { max-height: 150px; overflow-y: auto; font-size: 0.77rem; color: var(--muted);
+      font-family: 'SF Mono', 'Fira Mono', monospace; line-height: 1.8; }
+    .log-ok { color: var(--green); } .log-err { color: var(--red); }
+    .log-info { color: var(--accent2); } .log-warn { color: var(--yellow); }
+    .h-item { background: var(--surface2); border-radius: 8px;
+      padding: 10px 12px; margin-bottom: 8px; font-size: 0.85rem; line-height: 1.5; }
+    .h-ts { color: var(--muted); font-size: 0.72rem; margin-bottom: 3px; }
     .h-text { color: var(--text); }
-
-    /* ── User row ── */
     .user-row { display:flex; align-items:center; gap:10px; }
-    .avatar   { width:36px;height:36px;border-radius:50%;object-fit:cover; }
-
-    /* ── Spinner ── */
-    .spin {
-      width:16px;height:16px;
-      border:2px solid rgba(255,255,255,.3);
-      border-top-color:#fff;
-      border-radius:50%;
-      animation: _spin .7s linear infinite;
-      display:inline-block;
-    }
+    .avatar { width:36px;height:36px;border-radius:50%;object-fit:cover; }
+    .spin { width:16px;height:16px; border:2px solid rgba(255,255,255,.3);
+      border-top-color:#fff; border-radius:50%; animation: _spin .7s linear infinite; display:inline-block; }
     @keyframes _spin{to{transform:rotate(360deg)}}
-
-    /* ── Notice ── */
-    .notice {
-      background: rgba(124,106,255,.13);
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 0.85rem;
-      color: var(--accent2);
-      margin-bottom: 16px;
-      display: none;
-    }
-
+    .notice { background: rgba(124,106,255,.13); border: 1px solid var(--accent);
+      border-radius: 8px; padding: 10px 14px; font-size: 0.85rem;
+      color: var(--accent2); margin-bottom: 16px; display: none; }
     small { color: var(--muted); font-size: 0.78rem; }
-    select {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 8px;
-      color: var(--text);
-      font-size: 0.82rem;
-      outline: none;
-    }
+    select { background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 8px; color: var(--text); font-size: 0.82rem; outline: none; }
+    .hf-status { margin-top: 10px; font-size: 0.85rem; min-height: 24px;
+      display: flex; align-items: center; gap: 8px; }
+    .wake-input { background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 0.88rem;
+      outline: none; flex: 1; }
+    .wake-input:focus { border-color: var(--accent); }
+    .toggle-row { display: flex; align-items: center; gap: 10px;
+      font-size: 0.85rem; color: var(--muted); cursor: pointer; margin-top: 10px; }
+    .toggle-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--green); }
+    .silence-bar { height: 4px; background: var(--border); border-radius: 2px;
+      margin-top: 8px; overflow: hidden; display: none; }
+    .silence-bar-inner { height: 100%; background: var(--red);
+      transition: width 0.2s linear; width: 0%; }
+    .silence-bar.active { display: block; }
   </style>
 </head>
 <body>
 <div class="container">
-
   <header>
     <h1>🎙️ Tankedagboken</h1>
     <p>Spela in dina tankar — sparas direkt i Google Docs</p>
   </header>
 
-  <!-- Tasker-notice -->
-  <div id="autoNotice" class="notice">
-    ⚡ Automatisk inspelning startad via Tasker / AutoVoice
-  </div>
+  <div id="autoNotice" class="notice">⚡ Automatisk inspelning startad</div>
 
   <!-- ── GOOGLE AUTH ── -->
   <div class="card" id="authCard">
     <div class="card-title">Google-konto</div>
-
     <div id="notLoggedIn">
       <p style="color:var(--muted);font-size:.88rem;margin-bottom:14px;">
         Logga in för att spara transkriptioner i Google Docs.
@@ -311,7 +131,6 @@
         Logga in med Google
       </button>
     </div>
-
     <div id="loggedIn" style="display:none;">
       <div class="user-row">
         <img id="uAvatar" class="avatar" src="" alt="" />
@@ -327,18 +146,37 @@
     </div>
   </div>
 
-  <!-- ── SPELA IN ── -->
+  <!-- ── HANDSFREE LÄGE ── -->
   <div class="card">
-    <div class="card-title">Spela in</div>
+    <div class="card-title">🤙 Handsfree-läge</div>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px;">
+      Säg aktiveringsord → inspelning startar. Håll tyst i 3 sek → sparas automatiskt.
+    </p>
+    <div class="row" style="margin-bottom:12px;">
+      <small>Aktiveringsord:</small>
+      <input id="wakeWord" class="wake-input" type="text" value="hej dagbok"
+        placeholder="t.ex. hej dagbok" style="margin-left:8px;" />
+    </div>
+    <button id="hfBtn" class="btn btn-hf" style="width:100%;justify-content:center;padding:16px;"
+      onclick="toggleHandsfree()">
+      <span id="hfIcon">🎧</span>
+      <span id="hfLabel">Starta handsfree</span>
+    </button>
+    <div class="hf-status" id="hfStatus"></div>
+    <div class="silence-bar" id="silenceBar">
+      <div class="silence-bar-inner" id="silenceBarInner"></div>
+    </div>
+  </div>
 
+  <!-- ── MANUELL INSPELNING ── -->
+  <div class="card">
+    <div class="card-title">Manuell inspelning</div>
     <canvas id="visualizer"></canvas>
     <div id="timer">00:00</div>
-
     <button id="recordBtn" class="btn btn-primary" onclick="toggleRecording()">
       <span id="recIcon">🎙️</span>
       <span id="recLabel">Starta inspelning</span>
     </button>
-
     <div class="row" style="margin-top:12px;">
       <small>Metod:</small>
       <select id="methodSel">
@@ -362,6 +200,10 @@
     </div>
     <textarea id="transcriptText" placeholder="Din transkribering visas här. Du kan redigera texten innan du sparar…"></textarea>
     <div id="tStatus" style="margin-top:8px;font-size:.82rem;"></div>
+    <label class="toggle-row">
+      <input type="checkbox" id="autoSaveChk" checked onchange="autoSaveEnabled=this.checked" />
+      Spara automatiskt till Docs efter transkribering
+    </label>
   </div>
 
   <!-- ── LOGG ── -->
@@ -378,85 +220,91 @@
     <div class="row" style="cursor:pointer;margin-bottom:10px;" onclick="toggleEl('histWrap')">
       <div class="card-title" style="margin-bottom:0;">Senaste inlägg (lokalt)</div>
       <button class="btn btn-ghost" style="font-size:.75rem;padding:4px 10px;"
-              onclick="event.stopPropagation();clearHist()">Rensa</button>
+        onclick="event.stopPropagation();clearHist()">Rensa</button>
     </div>
     <div id="histWrap">
       <div id="histList"><small>Inga sparade inlägg ännu.</small></div>
     </div>
   </div>
-
-</div><!-- /container -->
+</div>
 
 <script>
-// ════════════════════════════════════════════════════════════
-//  CONFIG
+// ═══════════════════════════════════════════════════════════
+// CONFIG
 // ═══════════════════════════════════════════════════════════
 const OAUTH_CLIENT_ID = '516700443444-eka3nj23344e8gtci52qgsq2t8mn1aao.apps.googleusercontent.com';
 const DOC_ID          = '198VN_aDtpisiNVlx19dKXlDFNfnZC6xhbwdizXZSwVQ';
 const DOCS_SCOPE      = 'https://www.googleapis.com/auth/documents';
 const FUNCTION_URL    = '/.netlify/functions/transcribe';
+const SILENCE_THRESHOLD = 6;   // avg amplitude 0-255
+const SILENCE_DURATION  = 3000; // ms tystnad → stopp
 
 // ═══════════════════════════════════════════════════════════
-//  STATE
+// STATE
 // ═══════════════════════════════════════════════════════════
-let accessToken   = null;
-let userInfo      = null;
+let accessToken  = null;
+let userInfo     = null;
 let mediaRecorder = null;
-let audioChunks   = [];
-let isRecording   = false;
-let timerIv       = null;
-let timerSec      = 0;
-let animFrame     = null;
-let audioCtx      = null;
-let analyser      = null;
-let speechRecog   = null;
-let tokenClient   = null;
+let audioChunks  = [];
+let isRecording  = false;
+let timerIv      = null;
+let timerSec     = 0;
+let animFrame    = null;
+let audioCtx     = null;
+let analyser     = null;
+let speechRecog  = null;
+let tokenClient  = null;
+
+// Handsfree
+let handsfreeMode = false;
+let wakeWordRecog = null;
+let silenceInterval = null;
+let silentMs = 0;
+
+// Auto-save (default: ON)
+let autoSaveEnabled = true;
 
 // ═══════════════════════════════════════════════════════════
-//  BOOT
+// BOOT
 // ═══════════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
   resizeCanvas();
   renderHistory();
-
   // Återanvänd token från session
   const saved = sessionStorage.getItem('gis_token');
   if (saved) {
     try {
       const t = JSON.parse(saved);
-      if (t.expires_at > Date.now()) { accessToken = t.access_token; fetchUserInfo(); }
-      else sessionStorage.removeItem('gis_token');
+      if (t.expires_at > Date.now()) {
+        accessToken = t.access_token;
+        fetchUserInfo();
+      } else sessionStorage.removeItem('gis_token');
     } catch(_) {}
   }
-
-  // Tasker / AutoVoice ?action=record
+  // ?action=record
   if (new URLSearchParams(location.search).get('action') === 'record') {
     document.getElementById('autoNotice').style.display = 'block';
-    log('⚡ Auto-inspelning via URL-parameter', 'info');
     setTimeout(() => { if (!isRecording) startRecording(); }, 1100);
   }
 });
 
 // ═══════════════════════════════════════════════════════════
-//  GOOGLE IDENTITY SERVICES
+// GOOGLE AUTH
 // ═══════════════════════════════════════════════════════════
 function getTokenClient() {
   if (!tokenClient) {
     tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: OAUTH_CLIENT_ID,
-      scope: DOCS_SCOPE,
+      client_id: OAUTH_CLIENT_ID, scope: DOCS_SCOPE,
       callback: onToken,
       error_callback: e => log('OAuth-fel: ' + JSON.stringify(e), 'err')
     });
   }
   return tokenClient;
 }
-
 function startLogin() {
   try { getTokenClient().requestAccessToken(); }
   catch(e) { log('Kunde inte starta login: ' + e.message, 'err'); }
 }
-
 function onToken(resp) {
   if (resp.error) { log('Login misslyckades: ' + resp.error, 'err'); return; }
   accessToken = resp.access_token;
@@ -465,27 +313,24 @@ function onToken(resp) {
   log('✓ Inloggad med Google', 'ok');
   fetchUserInfo();
 }
-
 async function fetchUserInfo() {
   try {
     const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
       { headers: { Authorization: 'Bearer ' + accessToken } });
     userInfo = await r.json();
     showLoggedIn();
-    log('✓ ' > (userInfo.email || 'Inloggad'), 'ok');
+    log('✓ ' + (userInfo.email || 'Inloggad'), 'ok');
   } catch(e) { log('Kunde inte hämta användarinfo', 'err'); }
 }
-
 function showLoggedIn() {
   document.getElementById('notLoggedIn').style.display = 'none';
   document.getElementById('loggedIn').style.display = 'block';
   if (userInfo) {
-    document.getElementById('uName').textContent  = userInfo.name  || '';
+    document.getElementById('uName').textContent  = userInfo.name || '';
     document.getElementById('uEmail').textContent = userInfo.email || '';
     if (userInfo.picture) document.getElementById('uAvatar').src = userInfo.picture;
   }
 }
-
 function logout() {
   if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
   accessToken = null; userInfo = null;
@@ -496,7 +341,148 @@ function logout() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  INSPELNING
+// HANDSFREE LÄGE
+// ═══════════════════════════════════════════════════════════
+function toggleHandsfree() {
+  handsfreeMode ? stopHandsfree() : startHandsfree();
+}
+
+function startHandsfree() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert('Handsfree kräver Web Speech API.\nAnvänd Chrome på Android/desktop.');
+    return;
+  }
+  handsfreeMode = true;
+  setHfUI(true);
+  setHfStatus('👂 Lyssnar efter aktiveringsord…');
+  log('Handsfree startat — lyssnar efter "' + getWakeWord() + '"', 'ok');
+  listenForWakeWord();
+}
+
+function stopHandsfree() {
+  handsfreeMode = false;
+  if (wakeWordRecog) { try { wakeWordRecog.abort(); } catch(_){} wakeWordRecog = null; }
+  clearSilenceMonitor();
+  if (isRecording) stopRecording();
+  setHfUI(false);
+  setHfStatus('');
+  hideSilenceBar();
+  log('Handsfree avslutat', 'info');
+}
+
+function getWakeWord() {
+  return (document.getElementById('wakeWord').value || 'hej dagbok').toLowerCase().trim();
+}
+
+function listenForWakeWord() {
+  if (!handsfreeMode) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  wakeWordRecog = new SR();
+  wakeWordRecog.lang = 'sv-SE';
+  wakeWordRecog.continuous = false;
+  wakeWordRecog.interimResults = false;
+  wakeWordRecog.maxAlternatives = 3;
+
+  wakeWordRecog.onresult = (e) => {
+    const transcripts = Array.from(e.results[0]).map(r => r.transcript.toLowerCase());
+    const heard = transcripts.join(' | ');
+    log('Hörde: "' + heard + '"', 'info');
+    const word = getWakeWord();
+    if (transcripts.some(t => t.includes(word))) {
+      log('✓ Aktiveringsord! Startar inspelning…', 'ok');
+      setHfStatus('🔴 Spelar in — håll tyst i 3 sek för att avsluta');
+      startRecordingHandsfree();
+    } else {
+      scheduleNextWakeWord();
+    }
+  };
+
+  wakeWordRecog.onend = () => {
+    if (handsfreeMode && !isRecording) scheduleNextWakeWord();
+  };
+
+  wakeWordRecog.onerror = (e) => {
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      log('Wake word-fel: ' + e.error, 'warn');
+    }
+    if (handsfreeMode && !isRecording) scheduleNextWakeWord();
+  };
+
+  try { wakeWordRecog.start(); }
+  catch(e) { if (handsfreeMode) scheduleNextWakeWord(); }
+}
+
+function scheduleNextWakeWord() {
+  if (handsfreeMode && !isRecording) setTimeout(listenForWakeWord, 400);
+}
+
+async function startRecordingHandsfree() {
+  await startRecording();
+  // Start silence detection after a short delay (let user start speaking)
+  setTimeout(() => {
+    if (isRecording) startSilenceMonitor();
+  }, 1500);
+}
+
+// ── Tystnad-detektor ──
+function startSilenceMonitor() {
+  clearSilenceMonitor();
+  silentMs = 0;
+  showSilenceBar();
+
+  silenceInterval = setInterval(() => {
+    if (!isRecording || !analyser) { clearSilenceMonitor(); return; }
+
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(data);
+    const avg = data.reduce((a, b) => a + b, 0) / data.length;
+
+    if (avg < SILENCE_THRESHOLD) {
+      silentMs += 200;
+      const pct = Math.min(100, (silentMs / SILENCE_DURATION) * 100);
+      setSilenceBar(pct);
+      if (silentMs >= SILENCE_DURATION) {
+        clearSilenceMonitor();
+        setSilenceBar(100);
+        log('Tystnad detekterad — avslutar inspelning', 'info');
+        stopRecording();
+      }
+    } else {
+      silentMs = 0;
+      setSilenceBar(0);
+    }
+  }, 200);
+}
+
+function clearSilenceMonitor() {
+  if (silenceInterval) { clearInterval(silenceInterval); silenceInterval = null; }
+  silentMs = 0;
+}
+
+function showSilenceBar() {
+  document.getElementById('silenceBar').classList.add('active');
+}
+function hideSilenceBar() {
+  document.getElementById('silenceBar').classList.remove('active');
+  setSilenceBar(0);
+}
+function setSilenceBar(pct) {
+  document.getElementById('silenceBarInner').style.width = pct + '%';
+}
+
+function setHfUI(on) {
+  const btn = document.getElementById('hfBtn');
+  document.getElementById('hfIcon').textContent = on ? '⏹' : '🎧';
+  document.getElementById('hfLabel').textContent = on ? 'Avsluta handsfree' : 'Starta handsfree';
+  btn.classList.toggle('active', on);
+}
+function setHfStatus(msg) {
+  document.getElementById('hfStatus').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════
+// INSPELNING
 // ═══════════════════════════════════════════════════════════
 function getMethod() {
   const v = document.getElementById('methodSel').value;
@@ -510,13 +496,10 @@ async function toggleRecording() {
 async function startRecording() {
   const method = getMethod();
   log('Startar inspelning (' + method + ')…', 'info');
-
   if (method === 'webspeech') { startWebSpeech(); return; }
-
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     setupViz(stream);
-
     const mime = bestMime();
     mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {});
     audioChunks = [];
@@ -536,6 +519,7 @@ async function startRecording() {
   } catch(e) {
     log('Mikrofon-fel: ' + e.message, 'err');
     alert('Kunde inte komma åt mikrofon:\n' + e.message);
+    if (handsfreeMode) { setHfStatus('👂 Lyssnar efter aktiveringsord…'); scheduleNextWakeWord(); }
   }
 }
 
@@ -545,70 +529,83 @@ function stopRecording() {
     isRecording = false;
     setRecUI(false);
     stopTimer();
+    clearSilenceMonitor();
     log('⏹ Stoppad', 'info');
+    if (handsfreeMode) setHfStatus('⏳ Transkriberar…');
   }
   if (speechRecog) speechRecog.stop();
 }
 
 function bestMime() {
-  const candidates = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
-  return candidates.find(t => MediaRecorder.isTypeSupported(t)) || null;
+  const c = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
+  return c.find(t => MediaRecorder.isTypeSupported(t)) || null;
 }
 
-// ── Blob → base64 ──
 function blobToBase64(blob) {
   return new Promise((res, rej) => {
     const r = new FileReader();
-    r.onload  = () => res(r.result.split(',')[1]);
+    r.onload = () => res(r.result.split(',')[1]);
     r.onerror = rej;
     r.readAsDataURL(blob);
   });
 }
 
-// ── Skicka till Netlify Function ──
 async function transcribeViaFunction(blob) {
   setTStatus('warn', '⏳ Transkriberar med Whisper…');
   try {
     const base64 = await blobToBase64(blob);
     const res = await fetch(FUNCTION_URL, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ audio: base64, mimeType: blob.type })
+      body: JSON.stringify({ audio: base64, mimeType: blob.type })
     });
-
     const data = await res.json();
-
     if (!res.ok) throw new Error(data.error || res.statusText);
-
     const text = data.text || '';
+    if (!text.trim()) {
+      log('Ingen text från Whisper', 'warn');
+      setTStatus('warn', '⚠ Ingen text – prova igen');
+      if (handsfreeMode) { setHfStatus('👂 Lyssnar efter aktiveringsord…'); scheduleNextWakeWord(); }
+      return;
+    }
     appendTranscript(text);
-    setTStatus('ok', '✓ Transkribering klar');
+    setTStatus(ok', '✓ Transkribering klar');
     log('✓ Whisper: ' + text.slice(0,70) + (text.length > 70 ? '…' : ''), 'ok');
+
+    // Auto-spara
+    if (autoSaveEnabled) {
+      if (accessToken) {
+        await saveToDocs(text);
+      } else {
+        log('Auto-spara hoppar över — inte inloggad', 'warn');
+        setTStatus('warn', '⚠ Transkriberat men ej sparat — logga in');
+      }
+    }
+
+    // Handsfree: gå tillbaka till wake word-lyssning
+    if (handsfreeMode) {
+      hideSilenceBar();
+      setHfStatus('👂 Lyssnar efter aktiveringsord…');
+      scheduleNextWakeWord();
+    }
   } catch(e) {
     setTStatus('err', '✗ ' + e.message);
     log('Whisper-fel: ' + e.message, 'err');
+    if (handsfreeMode) { setHfStatus('👂 Lyssnar efter aktiveringsord…'); scheduleNextWakeWord(); }
   }
 }
 
-// ── Web Speech API ──
 function startWebSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    alert('Web Speech API stöds inte i din webbläsare.\nAnvänd Chrome eller Edge.');
-    return;
-  }
+  if (!SR) { alert('Web Speech API stöds inte.\nAnvänd Chrome eller Edge.'); return; }
   speechRecog = new SR();
   speechRecog.lang = 'sv-SE';
   speechRecog.continuous = true;
   speechRecog.interimResults = true;
-
   let final = document.getElementById('transcriptText').value
-            ? document.getElementById('transcriptText').value + '\n'
-            : '';
-  let interim = '';
-
+    ? document.getElementById('transcriptText').value + '\n' : '';
   speechRecog.onresult = e => {
-    interim = '';
+    let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
       else interim += e.results[i][0].transcript;
@@ -616,12 +613,13 @@ function startWebSpeech() {
     document.getElementById('transcriptText').value = final + interim;
   };
   speechRecog.onerror = e => log('Web Speech-fel: ' + e.error, 'err');
-  speechRecog.onend   = () => { isRecording = false; setRecUI(false); stopTimer(); log('⏹ Web Speech klar', 'info'); };
-
+  speechRecog.onend = () => {
+    isRecording = false; setRecUI(false); stopTimer();
+    log('⏹ Web Speech klar', 'info');
+    if (autoSaveEnabled && accessToken) saveToDocs();
+  };
   speechRecog.start();
-  setRecUI(true);
-  startTimer();
-  isRecording = true;
+  setRecUI(true); startTimer(); isRecording = true;
   log('🔴 Web Speech startad', 'ok');
 }
 
@@ -631,68 +629,59 @@ function appendTranscript(text) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  GOOGLE DOCS
+// GOOGLE DOCS
 // ═══════════════════════════════════════════════════════════
-async function saveToDocs() {
-  const text = document.getElementById('transcriptText').value.trim();
-  if (!text) { alert('Ingen text att spara.'); return; }
+async function saveToDocs(textOverride) {
+  const text = textOverride || document.getElementById('transcriptText').value.trim();
+  if (!text) { if (!textOverride) alert('Ingen text att spara.'); return; }
   if (!accessToken) { alert('Logga in med Google först.'); return; }
 
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> Sparar…';
   log('Sparar till Google Docs…', 'info');
+  if (handsfreeMode) setHfStatus('💾 Sparar till Docs…');
 
   try {
-    // Hämta dokumentets slutindex
     const docRes = await fetch(
       `https://docs.googleapis.com/v1/documents/${DOC_ID}`,
       { headers: { Authorization: 'Bearer ' + accessToken } }
     );
-
-    if (docRes.status === 401) {
-      logout();
-      throw new Error('Sessionen har gått ut — logga in igen');
-    }
-    if (!docRes.ok) {
-      const e = await docRes.json();
-      throw new Error(e.error?.message || docRes.statusText);
-    }
-
+    if (docRes.status === 401) { logout(); throw new Error('Session utgången — logga in igen'); }
+    if (!docRes.ok) { const e = await docRes.json(); throw new Error(e.error?.message || docRes.statusText); }
     const doc = await docRes.json();
     const content = doc.body.content;
     const endIndex = content[content.length - 1].endIndex - 1;
 
-    // Formatera inlägg
     const now = new Date();
     const ds = now.toLocaleDateString('sv-SE', {
       year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
     });
     const entry = '\n────────────────────────\n' + ds + '\n\n' + text + '\n';
 
-    // Append via batchUpdate
     const upd = await fetch(
       `https://docs.googleapis.com/v1/documents/${DOC_ID}:batchUpdate`,
       {
-        method:  'POST',
+        method: 'POST',
         headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ requests: [{ insertText: { location: { index: endIndex }, text: entry } }] })
+        body: JSON.stringify({ requests: [{ insertText: { location: { index: endIndex }, text: entry } }] })
       }
     );
-    if (!upd.ok) {
-      const e = await upd.json();
-      throw new Error(e.error?.message || upd.statusText);
-    }
+    if (!upd.ok) { const e = await upd.json(); throw new Error(e.error?.message || upd.statusText); }
 
     log('✓ Sparat till Google Docs', 'ok');
     saveHist(ds, text);
     renderHistory();
-    document.getElementById('transcriptText').value = '';
-    setTStatus('ok', '✓ Sparat i Google Docs!');
-
+    if (!textOverride) {
+      // Manuell spara — rensa textrutan
+      document.getElementById('transcriptText').value = '';
+    }
+    setTStatus(ok', '✓ Sparat i Google Docs! ' + ds);
+    if (handsfreeMode) setHfStatus('✅ Sparat! Lyssnar efter aktiveringsord…');
   } catch(e) {
     log('Docs-fel: ' + e.message, 'err');
     setTStatus('err', '✗ ' + e.message);
+    if (handsfreeMode) setHfStatus('⚠ Sparfel — fortsätter lyssna…');
   } finally {
     btn.disabled = false;
     btn.innerHTML = '💾 Spara till Docs';
@@ -700,17 +689,16 @@ async function saveToDocs() {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  VISUALIZER
+// VISUALIZER
 // ═══════════════════════════════════════════════════════════
 function setupViz(stream) {
   const canvas = document.getElementById('visualizer');
-  const ctx    = canvas.getContext('2d');
-  audioCtx     = new (window.AudioContext || window.webkitAudioContext)();
-  analyser     = audioCtx.createAnalyser();
+  const ctx = canvas.getContext('2d');
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
   analyser.fftSize = 256;
   audioCtx.createMediaStreamSource(stream).connect(analyser);
   const buf = new Uint8Array(analyser.frequencyBinCount);
-
   (function draw() {
     animFrame = requestAnimationFrame(draw);
     analyser.getByteFrequencyData(buf);
@@ -720,27 +708,24 @@ function setupViz(stream) {
     for (let i = 0; i < buf.length; i++) {
       const h = (buf[i] / 255) * canvas.height;
       ctx.fillStyle = `hsl(${250 + (buf[i]/255)*55},70%,56%)`;
-      ctx.fillRect(x, canvas.height - h, bw, h);
-      x += bw + 1;
+      ctx.fillRect(x, canvas.height - h, bw, h); x += bw + 1;
     }
   })();
 }
-
 function stopViz() {
   if (animFrame) cancelAnimationFrame(animFrame);
-  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; analyser = null; }
   const c = document.getElementById('visualizer');
   c.getContext('2d').clearRect(0, 0, c.width, c.height);
 }
 
 // ═══════════════════════════════════════════════════════════
-//  TIMER
+// TIMER
 // ═══════════════════════════════════════════════════════════
 function startTimer() {
   timerSec = 0;
   document.getElementById('timer').classList.add('active');
-  tick();
-  timerIv = setInterval(tick, 1000);
+  tick(); timerIv = setInterval(tick, 1000);
 }
 function tick() {
   const m = String(Math.floor(timerSec/60)).padStart(2,'0');
@@ -748,13 +733,10 @@ function tick() {
   document.getElementById('timer').textContent = m + ':' + s;
   timerSec++;
 }
-function stopTimer() {
-  clearInterval(timerIv);
-  document.getElementById('timer').classList.remove('active');
-}
+function stopTimer() { clearInterval(timerIv); document.getElementById('timer').classList.remove('active'); }
 
 // ═══════════════════════════════════════════════════════════
-//  HISTORIK
+// HISTORIK
 // ═══════════════════════════════════════════════════════════
 function saveHist(date, text) {
   const h = JSON.parse(localStorage.getItem('tdagbok_h') || '[]');
@@ -769,36 +751,30 @@ function renderHistory() {
   el.innerHTML = h.map(i => `
     <div class="h-item">
       <div class="h-ts">${i.date}</div>
-      <div class="h-text">${esc(i.text.slice(0<200))}${i.text.length>200?'…':''}</div>
+      <div class="h-text">${esc(i.text.slice(0,200))}${i.text.length>200?'…':''}</div>
     </div>`).join('');
 }
 function clearHist() {
   if (!confirm('Rensa lokal historik?')) return;
-  localStorage.removeItem('tdagbok_h');
-  renderHistory();
+  localStorage.removeItem('tdagbok_h'); renderHistory();
   log('Historik rensad', 'info');
 }
 
 // ═══════════════════════════════════════════════════════════
-//  UI HELPERS
+// UI HELPERS
 // ═══════════════════════════════════════════════════════════
 function setRecUI(on) {
-  const btn   = document.getElementById('recordBtn');
-  const icon  = document.getElementById('recIcon');
-  const label = document.getElementById('recLabel');
+  const btn = document.getElementById('recordBtn');
   btn.classList.toggle('recording', on);
-  icon.textContent  = on ? '⏹' : '🎙️';
-  label.textContent = on ? 'Stoppa inspelning' : 'Starta inspelning';
+  document.getElementById('recIcon').textContent  = on ? '⏹' : '🎙️';
+  document.getElementById('recLabel').textContent = on ? 'Stoppa inspelning' : 'Starta inspelning';
 }
 function setTStatus(type, msg) {
   const colors = { ok:'var(--green)', warn:'var(--yellow)', err:'var(--red)', '':'var(--muted)' };
   document.getElementById('tStatus').innerHTML =
     `<span style="color:${colors[type]||colors['']}">${msg}</span>`;
 }
-function clearT() {
-  document.getElementById('transcriptText').value = '';
-  setTStatus('', '');
-}
+function clearT() { document.getElementById('transcriptText').value = ''; setTStatus('',''); }
 function toggleEl(id) {
   const el = document.getElementById(id);
   el.style.display = el.style.display === 'none' ? '' : 'none';
@@ -808,16 +784,12 @@ function log(msg, type = '') {
   div.className = 'log-' + type;
   div.textContent = `[${new Date().toLocaleTimeString('sv-SE')}] ${msg}`;
   const l = document.getElementById('log');
-  l.appendChild(div);
-  l.scrollTop = l.scrollHeight;
+  l.appendChild(div); l.scrollTop = l.scrollHeight;
 }
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function resizeCanvas() {
   const c = document.getElementById('visualizer');
-  c.width  = c.offsetWidth;
-  c.height = c.offsetHeight;
+  c.width = c.offsetWidth; c.height = c.offsetHeight;
 }
 window.addEventListener('resize', resizeCanvas);
 </script>
